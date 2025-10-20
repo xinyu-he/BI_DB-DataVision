@@ -5,6 +5,14 @@
       <template #header>
         <div class="card-header">
           <span>筛选条件</span>
+          <div class="filter-actions">
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>查询
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>重置
+            </el-button>
+          </div>
         </div>
       </template>
       
@@ -19,14 +27,11 @@
               <el-input 
                 v-model="filterForm[field.field_name]" 
                 :placeholder="`请输入${field.display_name}`" 
+                clearable
               />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
       </el-form>
     </el-card>
     
@@ -35,8 +40,10 @@
       <template #header>
         <div class="card-header">
           <span>报表数据</span>
-          <div>
-            <el-button @click="handleRefresh" :loading="loading">刷新</el-button>
+          <div class="data-actions">
+            <el-button @click="handleRefresh" :loading="loading">
+              <el-icon><Refresh /></el-icon>{{ loading ? '刷新中...' : '刷新' }}
+            </el-button>
           </div>
         </div>
       </template>
@@ -46,12 +53,15 @@
         stripe 
         style="width: 100%" 
         v-loading="loading"
+        highlight-current-row
+        height="400"
       >
         <el-table-column 
           v-for="field in displayFields" 
           :key="field.field_name"
           :prop="field.field_name"
           :label="field.display_name"
+          :min-width="120"
         />
       </el-table>
       
@@ -63,7 +73,8 @@
         :page-size="reportData.page_size"
         :current-page="reportData.page"
         @current-change="handlePageChange"
-        style="margin-top: 20px; text-align: right;"
+        background
+        class="pagination"
       />
     </el-card>
   </div>
@@ -71,6 +82,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
 
 const props = defineProps({
@@ -124,7 +136,6 @@ const fetchData = async (page = 1) => {
       page_size: reportData.value.page_size
     }
     
-    console.log('查询参数:', filters);
     const result = await reportStore.fetchReportData(props.report.id, filters)
     reportData.value = result || { data: [], total: 0, page: 1, page_size: 20 }
   } catch (error) {
@@ -179,15 +190,43 @@ onMounted(() => {
 
 .filter-card {
   margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.data-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: none;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .filter-form {
   margin-bottom: 10px;
+  padding: 15px 0;
+}
+
+.filter-actions, .data-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pagination {
+  margin-top: 20px;
+  padding: 15px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pagination :deep(.el-pagination__ jumper) {
+  margin-left: 20px;
 }
 </style>

@@ -9,14 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.3.4",
-    "element-plus": "^2.3.14",
     "axios": "^1.5.1",
+    "element-plus": "^2.3.14",
     "pinia": "^2.1.7",
+    "vue": "^3.3.4",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.4.0",
+    "sass": "^1.93.2",
     "vite": "^4.4.11"
   }
 }
