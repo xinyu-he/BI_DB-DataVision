@@ -41,6 +41,9 @@
         <div class="card-header">
           <span>报表数据</span>
           <div class="data-actions">
+            <el-button @click="handleExport" :loading="exportLoading" type="success">
+              <el-icon><Download /></el-icon>{{ exportLoading ? '导出中...' : '导出Excel' }}
+            </el-button>
             <el-button @click="handleRefresh" :loading="loading">
               <el-icon><Refresh /></el-icon>{{ loading ? '刷新中...' : '刷新' }}
             </el-button>
@@ -82,7 +85,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, Download } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
 
 const props = defineProps({
@@ -104,6 +107,7 @@ const reportData = ref({
   page_size: 20
 })
 const loading = ref(false)
+const exportLoading = ref(false)
 
 // 可筛选字段
 const filterableFields = computed(() => {
@@ -143,6 +147,24 @@ const fetchData = async (page = 1) => {
     reportData.value = { data: [], total: 0, page: 1, page_size: 20 }
   } finally {
     loading.value = false
+  }
+}
+
+// 导出数据
+const handleExport = async () => {
+  if (!props.report) return
+  
+  exportLoading.value = true
+  try {
+    const filters = {
+      filters: { ...filterForm.value }
+    }
+    
+    await reportStore.exportReportData(props.report.id, filters)
+  } catch (error) {
+    console.error('导出报表数据失败:', error)
+  } finally {
+    exportLoading.value = false
   }
 }
 

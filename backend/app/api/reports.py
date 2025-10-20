@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
+import pandas as pd
+import tempfile
+import os
+from urllib.parse import quote
 from app import schemas, models
 from app.schemas import report as schemas
 from app.models import report as models
@@ -221,3 +225,93 @@ def get_report_data(
             raise HTTPException(status_code=500, detail=f"查询数据时出错: 指定的数据表不存在，请检查SQL语句中的表名是否正确。错误详情: {error_msg}")
         else:
             raise HTTPException(status_code=500, detail=f"查询数据时出错: {error_msg}")
+
+@router.post("/reports/{report_id}/export")
+def export_report_data(
+    report_id: int, 
+    filters: schemas.ReportDataFilter,
+    db: Session = Depends(get_db)
+):
+    """
+    导出报表数据为Excel
+    """
+    report = db.query(models.ReportConfig).filter(models.ReportConfig.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="报表未找到")
+    
+    # 根据报表配置的数据源获取对应的数据库会话
+    data_source = str(report.data_source) if report.data_source is not None else "main"
+    
+    try:
+        # 使用上下文管理器确保数据库连接正确关闭
+        with get_db_session(data_source) as data_db:
+            # 获取报表字段
+            fields = db.query(models.ReportField).filter(models.ReportField.report_id == report_id).all()
+            
+            # 解析SQL并执行查询
+            sql_text_str = str(report.sql_text)
+            # 过滤掉空字符串和null值的筛选条件
+            filter_conditions = {k: v for k, v in (filters.filters or {}).items() if v is not None and v != ''}
+            
+            # 应用筛选条件到SQL
+            if filter_conditions:
+                # 简单的WHERE条件添加（实际应用中需要更复杂的SQL解析）
+                if "WHERE" in sql_text_str.upper():
+                    # 如果SQL中已包含WHERE子句
+                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
+                    sql_text_str = sql_text_str + f" AND {where_clause}"
+                else:
+                    # 如果SQL中不包含WHERE子句
+                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
+                    sql_text_str = sql_text_str + f" WHERE {where_clause}"
+            
+            print(f"执行SQL: {sql_text_str}")
+            print(f"参数: {filter_conditions}")
+            
+            # 执行查询
+            result = data_db.execute(text(sql_text_str), filter_conditions)
+            rows = result.fetchall()
+            
+            # 转换为字典格式
+            column_names = result.keys()
+            data = [dict(zip(column_names, row)) for row in rows]
+            
+            # 创建DataFrame并导出为Excel
+            df = pd.DataFrame(data)
+            
+            # 创建临时文件
+            with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp_file:
+                tmp_filename = tmp_file.name
+            
+            # 保存到临时文件，直接使用to_excel方法
+            df.to_excel(tmp_filename, engine='openpyxl', index=False, sheet_name=str(report.name)[:31])
+            
+            # 读取文件内容
+            with open(tmp_filename, 'rb') as f:
+                excel_data = f.read()
+            
+            # 删除临时文件
+            os.unlink(tmp_filename)
+            
+            # 设置响应头，指定文件名为报表名称（处理中文编码问题）
+            filename = f"{report.name}.xlsx"
+            # 对文件名进行URL编码以支持中文
+            encoded_filename = quote(filename.encode('utf-8'))
+            headers = {
+                'Content-Disposition': f'attachment; filename*=UTF-8\'\'{encoded_filename}',
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+            
+            return Response(content=excel_data, headers=headers)
+            
+    except Exception as e:
+        # 打印详细的错误信息
+        print(f"导出数据时出错: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # 如果执行出错，返回更友好的错误信息
+        error_msg = str(e)
+        if "no such table" in error_msg:
+            raise HTTPException(status_code=500, detail=f"导出数据时出错: 指定的数据表不存在，请检查SQL语句中的表名是否正确。错误详情: {error_msg}")
+        else:
+            raise HTTPException(status_code=500, detail=f"导出数据时出错: {error_msg}")

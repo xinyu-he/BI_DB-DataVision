@@ -65,6 +65,36 @@ export const useReportStore = defineStore('report', {
       }
     },
 
+    async exportReportData(id, filters = {}) {
+      this.loading = true
+      this.error = null
+      try {
+        // 发送请求并下载文件
+        const response = await axios.post(`${API_BASE}/reports/${id}/export`, filters, {
+          responseType: 'blob' // 重要：设置响应类型为blob以处理文件下载
+        })
+        
+        // 创建下载链接
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `报表_${id}.xlsx`) // 默认文件名
+        document.body.appendChild(link)
+        link.click()
+        
+        // 清理
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        return response.data
+      } catch (error) {
+        this.error = error.message || '导出报表数据失败'
+        console.error('导出报表数据失败:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
     async createReport(reportData) {
       this.loading = true
       this.error = null
