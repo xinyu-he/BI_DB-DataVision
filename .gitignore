@@ -20,4 +20,4 @@ node_modules/
 
 # Database
 *.db
-*.sqlite
+*.sqlite*.env
