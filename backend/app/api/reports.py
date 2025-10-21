@@ -76,7 +76,8 @@ def create_report(report: schemas.ReportCreate, db: Session = Depends(get_db)):
                         field_name=field_data.field_name,
                         display_name=field_data.display_name,
                         filterable=field_data.filterable or False,
-                        order=field_data.order or 0
+                        order=field_data.order or 0,
+                        field_type=field_data.field_type or "string"  # 添加字段类型
                     )
                     db.add(db_field)
         
@@ -116,7 +117,8 @@ def update_report(report_id: int, report: schemas.ReportCreate, db: Session = De
                         field_name=field_data.field_name,
                         display_name=field_data.display_name,
                         filterable=field_data.filterable or False,
-                        order=field_data.order or 0
+                        order=field_data.order or 0,
+                        field_type=field_data.field_type or "string"  # 添加字段类型
                     )
                     db.add(db_field)
         
@@ -176,17 +178,56 @@ def get_report_data(
             # 过滤掉空字符串和null值的筛选条件
             filter_conditions = {k: v for k, v in (filters.filters or {}).items() if v is not None and v != ''}
             
+            # 构建字段类型映射，用于处理特殊查询
+            field_type_map = {field.field_name: field.field_type for field in fields} if fields else {}
+            
             # 应用筛选条件到SQL
             if filter_conditions:
-                # 简单的WHERE条件添加（实际应用中需要更复杂的SQL解析）
-                if "WHERE" in sql_text.upper():
-                    # 如果SQL中已包含WHERE子句
-                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
-                    sql_text = sql_text + f" AND {where_clause}"
-                else:
-                    # 如果SQL中不包含WHERE子句
-                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
-                    sql_text = sql_text + f" WHERE {where_clause}"
+                where_conditions = []
+                params = {}
+                
+                for key, value in filter_conditions.items():
+                    field_type = field_type_map.get(key, "string")
+                    
+                    # 处理日期范围查询
+                    if field_type in ["date-range", "datetime-range"] and isinstance(value, str) and "~" in value:
+                        # 范围查询，格式：开始时间~结束时间
+                        date_range = value.split("~")
+                        start_date = date_range[0].strip()
+                        end_date = date_range[1].strip() if len(date_range) > 1 else None
+                        
+                        if start_date and end_date:
+                            where_conditions.append(f"{key} BETWEEN :{key}_start AND :{key}_end")
+                            params[f"{key}_start"] = start_date
+                            params[f"{key}_end"] = end_date
+                        elif start_date:
+                            where_conditions.append(f"{key} >= :{key}_start")
+                            params[f"{key}_start"] = start_date
+                        elif end_date:
+                            where_conditions.append(f"{key} <= :{key}_end")
+                            params[f"{key}_end"] = end_date
+                    # 处理日期精确查询
+                    elif field_type in ["date", "datetime"] and isinstance(value, str):
+                        # 尝试解析多种日期格式
+                        where_conditions.append(f"{key} = :{key}")
+                        params[key] = value
+                    # 处理普通查询
+                    else:
+                        where_conditions.append(f"{key} = :{key}")
+                        params[key] = value
+                
+                # 应用WHERE条件到SQL
+                if where_conditions:
+                    where_clause = " AND ".join(where_conditions)
+                    # 处理UNION查询的特殊情况
+                    if "UNION" in sql_text.upper():
+                        # 如果是UNION查询，需要将WHERE子句包装在子查询中
+                        sql_text = f"SELECT * FROM ({sql_text}) AS sub_query WHERE {where_clause}"
+                    elif "WHERE" in sql_text.upper():
+                        sql_text = sql_text + f" AND {where_clause}"
+                    else:
+                        sql_text = sql_text + f" WHERE {where_clause}"
+                    filter_conditions = params  # 使用处理后的参数
             
             # 添加分页
             offset = (page - 1) * page_size
@@ -253,17 +294,56 @@ def export_report_data(
             # 过滤掉空字符串和null值的筛选条件
             filter_conditions = {k: v for k, v in (filters.filters or {}).items() if v is not None and v != ''}
             
+            # 构建字段类型映射，用于处理特殊查询
+            field_type_map = {field.field_name: field.field_type for field in fields} if fields else {}
+            
             # 应用筛选条件到SQL
             if filter_conditions:
-                # 简单的WHERE条件添加（实际应用中需要更复杂的SQL解析）
-                if "WHERE" in sql_text_str.upper():
-                    # 如果SQL中已包含WHERE子句
-                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
-                    sql_text_str = sql_text_str + f" AND {where_clause}"
-                else:
-                    # 如果SQL中不包含WHERE子句
-                    where_clause = " AND ".join([f"{key} = :{key}" for key in filter_conditions.keys()])
-                    sql_text_str = sql_text_str + f" WHERE {where_clause}"
+                where_conditions = []
+                params = {}
+                
+                for key, value in filter_conditions.items():
+                    field_type = field_type_map.get(key, "string")
+                    
+                    # 处理日期范围查询
+                    if field_type in ["date-range", "datetime-range"] and isinstance(value, str) and "~" in value:
+                        # 范围查询，格式：开始时间~结束时间
+                        date_range = value.split("~")
+                        start_date = date_range[0].strip()
+                        end_date = date_range[1].strip() if len(date_range) > 1 else None
+                        
+                        if start_date and end_date:
+                            where_conditions.append(f"{key} BETWEEN :{key}_start AND :{key}_end")
+                            params[f"{key}_start"] = start_date
+                            params[f"{key}_end"] = end_date
+                        elif start_date:
+                            where_conditions.append(f"{key} >= :{key}_start")
+                            params[f"{key}_start"] = start_date
+                        elif end_date:
+                            where_conditions.append(f"{key} <= :{key}_end")
+                            params[f"{key}_end"] = end_date
+                    # 处理日期精确查询
+                    elif field_type in ["date", "datetime"] and isinstance(value, str):
+                        # 尝试解析多种日期格式
+                        where_conditions.append(f"{key} = :{key}")
+                        params[key] = value
+                    # 处理普通查询
+                    else:
+                        where_conditions.append(f"{key} = :{key}")
+                        params[key] = value
+                
+                # 应用WHERE条件到SQL
+                if where_conditions:
+                    where_clause = " AND ".join(where_conditions)
+                    # 处理UNION查询的特殊情况
+                    if "UNION" in sql_text_str.upper():
+                        # 如果是UNION查询，需要将WHERE子句包装在子查询中
+                        sql_text_str = f"SELECT * FROM ({sql_text_str}) AS sub_query WHERE {where_clause}"
+                    elif "WHERE" in sql_text_str.upper():
+                        sql_text_str = sql_text_str + f" AND {where_clause}"
+                    else:
+                        sql_text_str = sql_text_str + f" WHERE {where_clause}"
+                    filter_conditions = params  # 使用处理后的参数
             
             print(f"执行SQL: {sql_text_str}")
             print(f"参数: {filter_conditions}")
@@ -278,6 +358,19 @@ def export_report_data(
             
             # 创建DataFrame并导出为Excel
             df = pd.DataFrame(data)
+            
+            # 根据字段类型进行数据格式化
+            if fields:
+                field_type_mapping = {field_item.field_name: str(field_item.field_type) for field_item in fields}
+                for column in df.columns:
+                    if column in field_type_mapping:
+                        field_type_val = field_type_mapping[column]
+                        if field_type_val == "date":
+                            df[column] = pd.to_datetime(df[column], errors='coerce').dt.date
+                        elif field_type_val == "datetime":
+                            df[column] = pd.to_datetime(df[column], errors='coerce')
+                        elif field_type_val == "number":
+                            df[column] = pd.to_numeric(df[column], errors='coerce')
             
             # 创建临时文件
             with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp_file:

@@ -33,6 +33,7 @@ class ReportFieldBase(BaseModel):
     display_name: str
     filterable: Optional[bool] = False
     order: Optional[int] = 0
+    field_type: Optional[str] = "string"  # 字段类型：string, date, number等
 
 # 字段配置创建模型
 class ReportFieldCreate(ReportFieldBase):

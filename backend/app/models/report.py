@@ -27,6 +27,7 @@ class ReportField(Base):
     display_name = Column(String(100), nullable=False)
     filterable = Column(Boolean, default=False)
     order = Column(Integer, default=0)
+    field_type = Column(String(50), default="string")  # 字段类型：string, date, number等
     
     # 关联报表配置
     report = relationship("ReportConfig", back_populates="fields")

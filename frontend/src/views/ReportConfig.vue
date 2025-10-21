@@ -136,7 +136,7 @@
           <div class="field-config-container">
             <el-table 
               :data="form.fields" 
-              style="width: 100%; min-width: 700px;"
+              style="width: 100%; min-width: 800px;"
               border
             >
               <el-table-column label="字段名" width="180">
@@ -155,6 +155,23 @@
                     placeholder="显示名" 
                     clearable
                   />
+                </template>
+              </el-table-column>
+              <el-table-column label="字段类型" width="120" align="center">
+                <template #default="scope">
+                  <el-select 
+                    v-model="scope.row.field_type" 
+                    placeholder="请选择类型"
+                    style="width: 100%"
+                  >
+                    <el-option label="字符串" value="string" />
+                    <el-option label="数字" value="number" />
+                    <el-option label="日期" value="date" />
+                    <el-option label="日期范围" value="date-range" />
+                    <el-option label="时间" value="datetime" />
+                    <el-option label="时间范围" value="datetime-range" />
+                    <el-option label="布尔值" value="boolean" />
+                  </el-select>
                 </template>
               </el-table-column>
               <el-table-column label="可筛选" width="100" align="center">
@@ -252,6 +269,7 @@ const addField = () => {
   form.value.fields.push({
     field_name: '',
     display_name: '',
+    field_type: 'string',
     filterable: false,
     order: form.value.fields.length
   })

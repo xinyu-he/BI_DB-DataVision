@@ -24,7 +24,84 @@
             :span="8"
           >
             <el-form-item :label="field.display_name">
+              <!-- 根据字段类型显示不同的输入控件 -->
               <el-input 
+                v-if="field.field_type === 'string' || field.field_type === undefined"
+                v-model="filterForm[field.field_name]" 
+                :placeholder="`请输入${field.display_name}`" 
+                clearable
+              />
+              <el-input-number
+                v-else-if="field.field_type === 'number'"
+                v-model="filterForm[field.field_name]"
+                :placeholder="`请输入${field.display_name}`"
+                style="width: 100%"
+                controls-position="right"
+              />
+              <el-date-picker
+                v-else-if="field.field_type === 'date'"
+                v-model="filterForm[field.field_name]"
+                type="date"
+                value-format="YYYY-MM-DD"
+                :placeholder="`请选择${field.display_name}`"
+                style="width: 100%"
+              />
+              <el-date-picker
+                v-else-if="field.field_type === 'datetime'"
+                v-model="filterForm[field.field_name]"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                :placeholder="`请选择${field.display_name}`"
+                style="width: 100%"
+              />
+              <!-- 日期范围选择器 -->
+              <div v-else-if="field.field_type === 'date-range'" style="display: flex; gap: 10px;">
+                <el-date-picker
+                  v-model="filterForm[`${field.field_name}_start`]"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  :placeholder="`开始${field.display_name}`"
+                  style="flex: 1;"
+                />
+                <span style="line-height: 32px;">-</span>
+                <el-date-picker
+                  v-model="filterForm[`${field.field_name}_end`]"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  :placeholder="`结束${field.display_name}`"
+                  style="flex: 1;"
+                />
+              </div>
+              <!-- 日期时间范围选择器 -->
+              <div v-else-if="field.field_type === 'datetime-range'" style="display: flex; gap: 10px;">
+                <el-date-picker
+                  v-model="filterForm[`${field.field_name}_start`]"
+                  type="datetime"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  :placeholder="`开始${field.display_name}`"
+                  style="flex: 1;"
+                />
+                <span style="line-height: 32px;">-</span>
+                <el-date-picker
+                  v-model="filterForm[`${field.field_name}_end`]"
+                  type="datetime"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  :placeholder="`结束${field.display_name}`"
+                  style="flex: 1;"
+                />
+              </div>
+              <el-select
+                v-else-if="field.field_type === 'boolean'"
+                v-model="filterForm[field.field_name]"
+                :placeholder="`请选择${field.display_name}`"
+                style="width: 100%"
+                clearable
+              >
+                <el-option label="是" value="true" />
+                <el-option label="否" value="false" />
+              </el-select>
+              <el-input
+                v-else
                 v-model="filterForm[field.field_name]" 
                 :placeholder="`请输入${field.display_name}`" 
                 clearable
@@ -65,7 +142,26 @@
           :prop="field.field_name"
           :label="field.display_name"
           :min-width="120"
-        />
+        >
+          <template #default="scope">
+            <!-- 根据字段类型格式化显示 -->
+            <span v-if="field.field_type === 'date' && scope.row[field.field_name]">
+              {{ formatDate(scope.row[field.field_name], 'date') }}
+            </span>
+            <span v-else-if="field.field_type === 'datetime' && scope.row[field.field_name]">
+              {{ formatDate(scope.row[field.field_name], 'datetime') }}
+            </span>
+            <span v-else-if="field.field_type === 'number' && scope.row[field.field_name] !== null && scope.row[field.field_name] !== undefined">
+              {{ formatNumber(scope.row[field.field_name]) }}
+            </span>
+            <span v-else-if="field.field_type === 'boolean'">
+              {{ formatBoolean(scope.row[field.field_name]) }}
+            </span>
+            <span v-else>
+              {{ scope.row[field.field_name] }}
+            </span>
+          </template>
+        </el-table-column>
       </el-table>
       
       <!-- 分页 -->
@@ -119,11 +215,45 @@ const displayFields = computed(() => {
   return props.report.fields || []
 })
 
+// 格式化日期
+const formatDate = (dateString, type = 'date') => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    if (type === 'date') {
+      return date.toLocaleDateString('zh-CN')
+    } else {
+      return date.toLocaleString('zh-CN')
+    }
+  } catch (e) {
+    return dateString
+  }
+}
+
+// 格式化数字
+const formatNumber = (value) => {
+  if (value === null || value === undefined) return ''
+  return Number(value).toLocaleString('zh-CN')
+}
+
+// 格式化布尔值
+const formatBoolean = (value) => {
+  if (value === true || value === 'true') return '是'
+  if (value === false || value === 'false') return '否'
+  return value
+}
+
 // 初始化筛选表单
 const initFilterForm = () => {
   const form = {}
   filterableFields.value.forEach(field => {
-    form[field.field_name] = ''
+    // 为范围查询字段添加开始和结束字段
+    if (field.field_type === 'date-range' || field.field_type === 'datetime-range') {
+      form[`${field.field_name}_start`] = ''
+      form[`${field.field_name}_end`] = ''
+    } else {
+      form[field.field_name] = ''
+    }
   })
   filterForm.value = form
 }
@@ -134,8 +264,41 @@ const fetchData = async (page = 1) => {
   
   loading.value = true
   try {
+    // 处理筛选条件，特别是日期范围
+    const processedFilters = {}
+    for (const [key, value] of Object.entries(filterForm.value)) {
+      // 查找字段类型
+      const field = filterableFields.value.find(f => f.field_name === key || 
+        key.startsWith(`${f.field_name}_`))
+      
+      if (field) {
+        const fieldType = field.field_type
+        
+        // 处理日期范围
+        if ((fieldType === 'date-range' || fieldType === 'datetime-range') && 
+            (key.endsWith('_start') || key.endsWith('_end'))) {
+          const baseFieldName = key.replace(/_(start|end)$/, '')
+          const startValue = filterForm.value[`${baseFieldName}_start`]
+          const endValue = filterForm.value[`${baseFieldName}_end`]
+          
+          if (startValue && endValue) {
+            processedFilters[baseFieldName] = `${startValue}~${endValue}`
+          } else if (startValue) {
+            processedFilters[baseFieldName] = `${startValue}~`
+          } else if (endValue) {
+            processedFilters[baseFieldName] = `~${endValue}`
+          }
+        } else if (value !== '' && value !== null && value !== undefined) {
+          processedFilters[key] = value
+        }
+      } else if (value !== '' && value !== null && value !== undefined) {
+        // 处理非范围字段
+        processedFilters[key] = value
+      }
+    }
+    
     const filters = {
-      filters: { ...filterForm.value },
+      filters: processedFilters,
       page: page,
       page_size: reportData.value.page_size
     }
@@ -156,8 +319,41 @@ const handleExport = async () => {
   
   exportLoading.value = true
   try {
+    // 处理筛选条件，特别是日期范围
+    const processedFilters = {}
+    for (const [key, value] of Object.entries(filterForm.value)) {
+      // 查找字段类型
+      const field = filterableFields.value.find(f => f.field_name === key || 
+        key.startsWith(`${f.field_name}_`))
+      
+      if (field) {
+        const fieldType = field.field_type
+        
+        // 处理日期范围
+        if ((fieldType === 'date-range' || fieldType === 'datetime-range') && 
+            (key.endsWith('_start') || key.endsWith('_end'))) {
+          const baseFieldName = key.replace(/_(start|end)$/, '')
+          const startValue = filterForm.value[`${baseFieldName}_start`]
+          const endValue = filterForm.value[`${baseFieldName}_end`]
+          
+          if (startValue && endValue) {
+            processedFilters[baseFieldName] = `${startValue}~${endValue}`
+          } else if (startValue) {
+            processedFilters[baseFieldName] = `${startValue}~`
+          } else if (endValue) {
+            processedFilters[baseFieldName] = `~${endValue}`
+          }
+        } else if (value !== '' && value !== null && value !== undefined) {
+          processedFilters[key] = value
+        }
+      } else if (value !== '' && value !== null && value !== undefined) {
+        // 处理非范围字段
+        processedFilters[key] = value
+      }
+    }
+    
     const filters = {
-      filters: { ...filterForm.value }
+      filters: processedFilters
     }
     
     await reportStore.exportReportData(props.report.id, filters)
