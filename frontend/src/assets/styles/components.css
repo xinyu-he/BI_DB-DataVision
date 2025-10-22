@@ -1,0 +1,141 @@
+/* 组件美化样式 */
+
+/* 增强按钮样式 */
+.el-button.el-button--primary {
+  background: linear-gradient(90deg, #409eff, #1a73e8);
+  border: none;
+  box-shadow: 0 4px 6px rgba(64, 158, 255, 0.3);
+  color: white;
+}
+
+.el-button.el-button--primary:hover {
+  background: linear-gradient(90deg, #66b1ff, #409eff);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(64, 158, 255, 0.4);
+}
+
+.el-button.el-button--success {
+  background: linear-gradient(90deg, #67c23a, #4e9e2e);
+  border: none;
+  box-shadow: 0 4px 6px rgba(103, 194, 58, 0.3);
+  color: white;
+}
+
+.el-button.el-button--success:hover {
+  background: linear-gradient(90deg, #85ce61, #67c23a);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(103, 194, 58, 0.4);
+}
+
+.el-button.el-button--warning {
+  background: linear-gradient(90deg, #e6a23c, #c68a2d);
+  border: none;
+  box-shadow: 0 4px 6px rgba(230, 162, 60, 0.3);
+  color: white;
+}
+
+.el-button.el-button--warning:hover {
+  background: linear-gradient(90deg, #ebb563, #e6a23c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(230, 162, 60, 0.4);
+}
+
+.el-button.el-button--danger {
+  background: linear-gradient(90deg, #f56c6c, #d94f4f);
+  border: none;
+  box-shadow: 0 4px 6px rgba(245, 108, 108, 0.3);
+  color: white;
+}
+
+.el-button.el-button--danger:hover {
+  background: linear-gradient(90deg, #f78989, #f56c6c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(245, 108, 108, 0.4);
+}
+
+/* 增强输入框样式 */
+.el-input__wrapper {
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #409eff inset;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px #409eff inset;
+}
+
+/* 增强选择框样式 */
+.el-select__wrapper {
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px #409eff inset;
+}
+
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 2px #409eff inset;
+}
+
+/* 增强表格样式 */
+.el-table__header th {
+  background: linear-gradient(180deg, #f5f7fa, #ebeef5) !important;
+  color: #303133;
+  font-weight: 600;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.el-table__row {
+  transition: all 0.2s;
+}
+
+.el-table__row:hover {
+  background-color: #f0f7ff !important;
+}
+
+.el-table__row--striped.el-table__row--striped {
+  background-color: #fafafa;
+}
+
+.el-table__row--striped.el-table__row--striped:hover {
+  background-color: #f0f7ff !important;
+}
+
+/* 增强标签样式 */
+.el-tag {
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-weight: 500;
+}
+
+.el-tag.el-tag--success {
+  background-color: #f0f9eb;
+  border-color: #e1f3d8;
+  color: #67c23a;
+}
+
+.el-tag.el-tag--danger {
+  background-color: #fef0f0;
+  border-color: #fde2e2;
+  color: #f56c6c;
+}
+
+/* 增强分页样式 */
+.el-pagination.is-background .el-pager li {
+  border-radius: 6px;
+  margin: 0 2px;
+  transition: all 0.3s;
+}
+
+.el-pagination.is-background .el-pager li:hover {
+  color: #409eff;
+}
+
+.el-pagination.is-background .el-pager li.is-active {
+  background-color: #409eff;
+  color: white;
+}

@@ -1,0 +1,175 @@
+/* 全局样式美化 */
+
+/* 主色调定义 */
+:root {
+  --primary-color: #409eff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+  --info-color: #909399;
+  --background-color: #f5f7fa;
+  --card-background: #ffffff;
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-placeholder: #a8abb2;
+  --border-color: #dcdfe6;
+}
+
+/* 卡片美化 */
+.el-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.el-card .el-card__header {
+  background-color: var(--card-background);
+  border-bottom: 1px solid var(--border-color);
+  padding: 15px 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.el-card .el-card__body {
+  padding: 20px;
+}
+
+/* 表格美化 */
+.el-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.el-table th {
+  background-color: #f5f7fa !important;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.el-table td {
+  color: var(--text-primary);
+}
+
+.el-table .el-table__row:hover {
+  background-color: #f5f7fa !important;
+}
+
+/* 按钮美化 */
+.el-button {
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 表单美化 */
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-form-item .el-form-item__label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* 输入框美化 */
+.el-input__wrapper {
+  border-radius: 4px;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+/* 对话框美化 */
+.el-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.el-dialog .el-dialog__header {
+  background-color: var(--card-background);
+  border-bottom: 1px solid var(--border-color);
+  padding: 15px 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.el-dialog .el-dialog__body {
+  padding: 20px;
+}
+
+.el-dialog .el-dialog__footer {
+  padding: 15px 20px;
+  background-color: var(--card-background);
+  border-top: 1px solid var(--border-color);
+}
+
+/* 标签美化 */
+.el-tag {
+  border-radius: 4px;
+}
+
+/* 分页美化 */
+.el-pagination {
+  padding: 20px 0;
+}
+
+.el-pagination .el-pager li {
+  border-radius: 4px;
+}
+
+.el-pagination .btn-next, 
+.el-pagination .btn-prev {
+  border-radius: 4px;
+}
+
+/* 页面过渡动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* 卡片过渡动画 */
+.card-enter-active,
+.card-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.card-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.card-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* 按钮点击效果 */
+.button-click {
+  transition: transform 0.1s;
+}
+
+.button-click:active {
+  transform: scale(0.98);
+}
