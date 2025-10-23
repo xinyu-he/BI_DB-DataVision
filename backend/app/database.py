@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.engine import Engine
 import os
 from dotenv import load_dotenv
 import pymysql
@@ -31,7 +32,7 @@ engine_order = engine_business
 SessionLocalOrder = SessionLocalBusiness
 
 # 数据源映射
-DATABASE_ENGINES: Dict[str, object] = {
+DATABASE_ENGINES: Dict[str, Engine] = {
     "main": engine_main,
     "business": engine_business,
     "order": engine_business  # 订单数据源使用业务数据库

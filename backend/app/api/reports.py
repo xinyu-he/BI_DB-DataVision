@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 import pandas as pd
 import tempfile
@@ -9,9 +10,13 @@ from urllib.parse import quote
 from app import schemas, models
 from app.schemas import report as schemas
 from app.models import report as models
-from app.database import get_db, get_db_session
+from app.database import get_db, get_db_session, DATABASE_ENGINES
 
 router = APIRouter()
+
+class SQLValidationResponse(schemas.BaseModel):
+    valid: bool
+    error: Optional[str] = None
 
 @router.get("/reports", response_model=List[schemas.ReportConfig])
 def get_reports(
@@ -408,3 +413,54 @@ def export_report_data(
             raise HTTPException(status_code=500, detail=f"导出数据时出错: 指定的数据表不存在，请检查SQL语句中的表名是否正确。错误详情: {error_msg}")
         else:
             raise HTTPException(status_code=500, detail=f"导出数据时出错: {error_msg}")
+
+@router.post("/reports/validate-sql", response_model=SQLValidationResponse)
+def validate_sql(
+    sql_request: schemas.SQLValidationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    校验SQL语法
+    """
+    sql_text = sql_request.sql_text
+    data_source = sql_request.data_source or "main"
+    
+    if not sql_text:
+        return SQLValidationResponse(valid=False, error="SQL语句不能为空")
+    
+    # 基本检查：必须以SELECT开头
+    if not sql_text.strip().upper().startswith("SELECT"):
+        return SQLValidationResponse(valid=False, error="SQL语句必须以SELECT开头")
+    
+    try:
+        # 根据报表配置的数据源获取对应的数据库会话
+        data_source = str(data_source) if data_source is not None else "main"
+        
+        # 使用上下文管理器确保数据库连接正确关闭
+        with get_db_session(data_source) as data_db:
+            # 获取数据库引擎URL来判断数据库类型
+            from sqlalchemy.engine import Engine
+            from typing import Union
+            engine: Union[Engine, None] = DATABASE_ENGINES.get(data_source)
+            engine_url = str(engine.url) if engine else ""
+            
+            # 使用EXPLAIN来检查SQL语法（MySQL）
+            # 对于其他数据库可能需要调整
+            if "sqlite" in engine_url:
+                # SQLite不支持EXPLAIN，使用不同的方式
+                try:
+                    # 尝试执行一个不会返回结果的查询
+                    data_db.execute(text(f"EXPLAIN QUERY PLAN {sql_text}"))
+                    return SQLValidationResponse(valid=True)
+                except Exception as e:
+                    return SQLValidationResponse(valid=False, error=f"SQL语法错误: {str(e)}")
+            else:
+                # MySQL等数据库支持EXPLAIN
+                try:
+                    # 使用EXPLAIN来检查SQL语法
+                    data_db.execute(text(f"EXPLAIN {sql_text}"))
+                    return SQLValidationResponse(valid=True)
+                except Exception as e:
+                    return SQLValidationResponse(valid=False, error=f"SQL语法错误: {str(e)}")
+    except Exception as e:
+        return SQLValidationResponse(valid=False, error=f"校验SQL时发生错误: {str(e)}")

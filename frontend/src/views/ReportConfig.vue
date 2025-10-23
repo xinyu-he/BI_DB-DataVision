@@ -97,12 +97,11 @@
         </el-row>
         
         <el-form-item label="查询SQL" prop="sql_text">
-          <el-input 
-            v-model="form.sql_text" 
-            type="textarea" 
-            :rows="6" 
-            placeholder="请输入查询SQL（仅支持SELECT语句）" 
-            class="sql-input"
+          <SQLEditor
+            ref="sqlEditorRef"
+            v-model="form.sql_text"
+            :data_source="form.data_source"
+            @validation="handleSQLValidation"
           />
         </el-form-item>
         
@@ -217,7 +216,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">保存</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">保存</el-button>
         </span>
       </template>
     </el-dialog>
@@ -229,12 +228,16 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
+import SQLEditor from '../components/SQLEditor.vue'
 
 const reportStore = useReportStore()
 
 const dialogVisible = ref(false)
 const editingReport = ref(null)
 const formRef = ref(null)
+const sqlEditorRef = ref(null)
+const submitting = ref(false)
+const sqlValid = ref(true)
 
 const form = ref({
   name: '',
@@ -248,7 +251,40 @@ const form = ref({
 const rules = {
   name: [{ required: true, message: '请输入报表名称', trigger: 'blur' }],
   type: [{ required: true, message: '请输入报表类型', trigger: 'blur' }],
-  sql_text: [{ required: true, message: '请输入查询SQL', trigger: 'blur' }]
+  sql_text: [
+    { required: true, message: '请输入查询SQL', trigger: 'blur' },
+    { validator: validateSQL, trigger: 'blur' }
+  ]
+}
+
+// SQL校验规则
+function validateSQL(rule, value, callback) {
+  if (!value) {
+    callback(new Error('请输入查询SQL'))
+    return
+  }
+  
+  // 必须以SELECT开头
+  if (!/^SELECT\b/i.test(value.trim())) {
+    callback(new Error('SQL语句必须以SELECT开头'))
+    return
+  }
+  
+  // 如果SQL编辑器校验失败，则阻止提交
+  if (!sqlValid.value) {
+    callback(new Error('SQL校验失败，请检查SQL语句'))
+    return
+  }
+  
+  callback()
+}
+
+// 处理SQL校验结果
+const handleSQLValidation = (result) => {
+  sqlValid.value = result.valid
+  if (!result.valid) {
+    console.log('SQL校验失败:', result.error)
+  }
 }
 
 // 格式化日期
@@ -303,6 +339,7 @@ const handleCreate = () => {
     enable: true,
     fields: []
   }
+  sqlValid.value = true
   dialogVisible.value = true
 }
 
@@ -320,6 +357,7 @@ const handleEdit = async (report) => {
       enable: reportDetail.enable,
       fields: reportDetail.fields ? [...reportDetail.fields] : []
     }
+    sqlValid.value = true
     dialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取报表详情失败: ' + (error.message || '未知错误'))
@@ -352,9 +390,15 @@ const handleDelete = (report) => {
 const handleSubmit = async () => {
   if (!formRef.value) return
   
+  // 先校验SQL
+  if (sqlEditorRef.value) {
+    await sqlEditorRef.value.validateSQL()
+  }
+  
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     
+    submitting.value = true
     try {
       if (editingReport.value) {
         // 更新报表
@@ -368,6 +412,8 @@ const handleSubmit = async () => {
       dialogVisible.value = false
     } catch (error) {
       ElMessage.error('操作失败: ' + (error.message || '未知错误'))
+    } finally {
+      submitting.value = false
     }
   })
 }
@@ -439,12 +485,6 @@ onMounted(() => {
   max-height: 300px;
   overflow: auto;
   border-radius: 8px;
-}
-
-.sql-input :deep(.el-textarea__inner) {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .report-name {

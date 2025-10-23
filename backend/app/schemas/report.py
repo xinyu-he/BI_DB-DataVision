@@ -67,3 +67,8 @@ class ReportDataResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+# SQL校验请求模型
+class SQLValidationRequest(BaseModel):
+    sql_text: str
+    data_source: Optional[str] = "main"
