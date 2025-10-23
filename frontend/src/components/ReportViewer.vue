@@ -135,6 +135,7 @@
         v-loading="loading"
         highlight-current-row
         height="400"
+        class="data-table"
       >
         <el-table-column 
           v-for="field in displayFields" 
@@ -453,5 +454,38 @@ onMounted(() => {
 
 .pagination :deep(.el-pagination__ jumper) {
   margin-left: 20px;
+}
+
+.data-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.data-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-input__wrapper) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-input__inner) {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.filter-form :deep(.el-select) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-select__wrapper) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-date-editor) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-date-editor .el-input__wrapper) {
+  background-color: var(--card-background);
 }
 </style>

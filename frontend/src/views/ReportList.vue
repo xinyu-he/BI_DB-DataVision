@@ -66,6 +66,7 @@
         style="width: 100%" 
         v-loading="reportStore.loading"
         highlight-current-row
+        class="report-table"
       >
         <el-table-column prop="name" label="报表名称" min-width="150">
           <template #default="scope">
@@ -256,5 +257,30 @@ onMounted(() => {
   background-color: var(--card-background);
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
+}
+
+.report-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.report-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.search-form :deep(.el-input__wrapper) {
+  background-color: var(--card-background);
+}
+
+.search-form :deep(.el-input__inner) {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.search-form :deep(.el-select) {
+  background-color: var(--card-background);
+}
+
+.search-form :deep(.el-select__wrapper) {
+  background-color: var(--card-background);
 }
 </style>

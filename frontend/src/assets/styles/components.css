@@ -226,3 +226,28 @@
 .el-checkbox__label {
   color: var(--text-primary);
 }
+
+/* 数字输入框样式 */
+.el-input-number {
+  background-color: var(--card-background);
+}
+
+.el-input-number__decrease, 
+.el-input-number__increase {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.el-input-number__decrease:hover, 
+.el-input-number__increase:hover {
+  background-color: var(--table-row-hover);
+}
+
+/* 日期时间选择器样式 */
+.el-date-editor {
+  background-color: var(--card-background);
+}
+
+.el-date-editor .el-input__wrapper {
+  background-color: var(--card-background);
+}

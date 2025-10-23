@@ -17,6 +17,7 @@
         style="width: 100%" 
         v-loading="reportStore.loading"
         highlight-current-row
+        class="report-table"
       >
         <el-table-column prop="name" label="报表名称" min-width="150">
           <template #default="scope">
@@ -137,6 +138,7 @@
               :data="form.fields" 
               style="width: 100%; min-width: 800px;"
               border
+              class="field-table"
             >
               <el-table-column label="字段名" width="180">
                 <template #default="scope">
@@ -517,5 +519,38 @@ onMounted(() => {
 
 .config-form :deep(.el-form-item__label) {
   color: var(--text-primary);
+}
+
+.report-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.report-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-input__wrapper) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-input__inner) {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.field-table :deep(.el-select) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-select__wrapper) {
+  background-color: var(--card-background);
 }
 </style>
