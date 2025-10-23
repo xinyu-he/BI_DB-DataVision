@@ -411,12 +411,14 @@ onMounted(() => {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: none;
+  background-color: var(--card-background);
 }
 
 .data-card {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: none;
+  background-color: var(--card-background);
 }
 
 .card-header {
@@ -425,11 +427,16 @@ onMounted(() => {
   align-items: center;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .filter-form {
   margin-bottom: 10px;
   padding: 15px 0;
+}
+
+.filter-form :deep(.el-form-item__label) {
+  color: var(--text-primary);
 }
 
 .filter-actions, .data-actions {

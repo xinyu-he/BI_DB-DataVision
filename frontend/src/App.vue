@@ -26,6 +26,16 @@
             <el-menu-item index="/config">
               <el-icon><Setting /></el-icon>报表配置
             </el-menu-item>
+            <el-menu-item class="theme-toggle-item">
+              <el-switch
+                v-model="isDark"
+                inline-prompt
+                :active-icon="Moon"
+                :inactive-icon="Sunny"
+                @change="toggleTheme"
+                style="--el-switch-on-color: #444; --el-switch-off-color: #ddd;"
+              />
+            </el-menu-item>
           </el-menu>
         </div>
       </el-header>
@@ -46,13 +56,23 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { House, Document, Setting, DataAnalysis } from '@element-plus/icons-vue'
+import { useThemeStore } from './stores/theme'
+import { House, Document, Setting, DataAnalysis, Sunny, Moon } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
+const themeStore = useThemeStore()
 const activeIndex = ref(route.path)
+const isDark = ref(false)
+
+// 初始化主题
+onMounted(() => {
+  themeStore.initTheme()
+  themeStore.watchSystemTheme()
+  isDark.value = themeStore.isDark
+})
 
 watch(route, (to) => {
   activeIndex.value = to.path
@@ -61,16 +81,20 @@ watch(route, (to) => {
 const handleSelect = (key) => {
   router.push(key)
 }
+
+const toggleTheme = () => {
+  themeStore.toggleTheme()
+}
 </script>
 
 <style scoped>
 #app {
   height: 100vh;
-  background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
+  background: var(--background-color);
 }
 
 .app-header {
-  background: linear-gradient(90deg, #409eff 0%, #1a73e8 100%);
+  background: var(--header-background);
   color: white;
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
@@ -121,17 +145,29 @@ const handleSelect = (key) => {
 }
 
 .app-menu :deep(.el-menu-item:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--menu-hover-bg) !important;
   color: white !important;
 }
 
 .app-menu :deep(.el-menu-item.is-active) {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: var(--menu-active-bg) !important;
   border-bottom: 2px solid #ffd04b !important; /* Indicators */
 }
 
+.theme-toggle-item {
+  display: flex;
+  align-items: center;
+  margin-left: 20px !important;
+}
+
+.app-main {
+  background: var(--background-color);
+  padding: 20px;
+  min-height: calc(100vh - 120px);
+}
+
 .app-footer {
-  background-color: #f5f5f5;
+  background-color: var(--footer-bg);
   padding: 20px 0;
   text-align: center;
 }
@@ -143,7 +179,7 @@ const handleSelect = (key) => {
 
 .footer-content p {
   margin: 0;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 </style>

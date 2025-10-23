@@ -31,6 +31,10 @@
             </el-card>
           </el-col>
         </el-row>
+        
+        <div class="theme-tip">
+          <p>💡 使用右上角的切换按钮可以切换浅色/深色主题</p>
+        </div>
       </div>
     </el-card>
   </div>
@@ -51,9 +55,25 @@ const goToList = () => {
 </script>
 
 <style scoped>
+.home {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .welcome-content {
   text-align: center;
   padding: 20px;
+}
+
+.welcome-content h2 {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.welcome-content p {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-bottom: 30px;
 }
 
 .features {
@@ -62,6 +82,14 @@ const goToList = () => {
 
 .feature-card {
   height: 200px;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .feature-content {
@@ -73,10 +101,26 @@ const goToList = () => {
 }
 
 .feature-content h3 {
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
 .feature-content p {
+  color: var(--text-secondary);
   margin-bottom: 20px;
+}
+
+.theme-tip {
+  margin-top: 40px;
+  padding: 15px;
+  background-color: var(--table-row-hover);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.theme-tip p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 14px;
 }
 </style>

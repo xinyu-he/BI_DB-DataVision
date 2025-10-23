@@ -205,18 +205,21 @@ onMounted(() => {
 <style scoped>
 .report-list {
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .list-card {
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   border: none;
+  background-color: var(--card-background);
 }
 
 .search-form {
   margin-bottom: 20px;
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--table-row-hover);
   border-radius: 8px;
 }
 
@@ -226,6 +229,7 @@ onMounted(() => {
   align-items: center;
   font-size: 18px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -235,7 +239,11 @@ onMounted(() => {
 
 .report-name {
   font-weight: 500;
-  color: #409eff;
+  color: var(--primary-color);
+}
+
+.report-dialog :deep(.el-dialog) {
+  background-color: var(--card-background);
 }
 
 .report-dialog :deep(.el-dialog__body) {
@@ -245,5 +253,8 @@ onMounted(() => {
 
 .report-dialog :deep(.el-dialog__header) {
   padding: 15px 20px;
+  background-color: var(--card-background);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 </style>
