@@ -16,6 +16,7 @@
     "@codemirror/view": "^6.38.6",
     "axios": "^1.5.1",
     "codemirror": "^6.0.2",
+    "echarts": "^5.4.3",
     "element-plus": "^2.3.14",
     "pinia": "^2.1.7",
     "vue": "^3.3.4",

@@ -112,12 +112,22 @@
       </el-form>
     </el-card>
     
+    <!-- 图表可视化 -->
+    <ChartViewer 
+      v-if="showChart && reportData.data.length > 0" 
+      :report-data="reportData.data" 
+      :fields="displayFields" 
+    />
+    
     <!-- 报表数据表格 -->
     <el-card class="data-card">
       <template #header>
         <div class="card-header">
           <span>报表数据</span>
           <div class="data-actions">
+            <el-button @click="toggleChart" :type="showChart ? 'primary' : 'default'">
+              <el-icon><Histogram /></el-icon>{{ showChart ? '隐藏图表' : '显示图表' }}
+            </el-button>
             <el-button @click="handleExport" :loading="exportLoading" type="success">
               <el-icon><Download /></el-icon>{{ exportLoading ? '导出中...' : '导出Excel' }}
             </el-button>
@@ -182,8 +192,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Search, Refresh, Download } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, Histogram } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
+import ChartViewer from './ChartViewer.vue'
 
 const props = defineProps({
   report: {
@@ -205,6 +216,7 @@ const reportData = ref({
 })
 const loading = ref(false)
 const exportLoading = ref(false)
+const showChart = ref(false)
 
 // 可筛选字段
 const filterableFields = computed(() => {
@@ -242,6 +254,11 @@ const formatBoolean = (value) => {
   if (value === true || value === 'true') return '是'
   if (value === false || value === 'false') return '否'
   return value
+}
+
+// 切换图表显示
+const toggleChart = () => {
+  showChart.value = !showChart.value
 }
 
 // 初始化筛选表单
