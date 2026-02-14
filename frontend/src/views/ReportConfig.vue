@@ -17,6 +17,7 @@
         style="width: 100%" 
         v-loading="reportStore.loading"
         highlight-current-row
+        class="report-table"
       >
         <el-table-column prop="name" label="报表名称" min-width="150">
           <template #default="scope">
@@ -97,12 +98,11 @@
         </el-row>
         
         <el-form-item label="查询SQL" prop="sql_text">
-          <el-input 
-            v-model="form.sql_text" 
-            type="textarea" 
-            :rows="6" 
-            placeholder="请输入查询SQL（仅支持SELECT语句）" 
-            class="sql-input"
+          <SQLEditor
+            ref="sqlEditorRef"
+            v-model="form.sql_text"
+            :data_source="form.data_source"
+            @validation="handleSQLValidation"
           />
         </el-form-item>
         
@@ -138,6 +138,7 @@
               :data="form.fields" 
               style="width: 100%; min-width: 800px;"
               border
+              class="field-table"
             >
               <el-table-column label="字段名" width="180">
                 <template #default="scope">
@@ -217,7 +218,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">保存</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">保存</el-button>
         </span>
       </template>
     </el-dialog>
@@ -229,12 +230,16 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
+import SQLEditor from '../components/SQLEditor.vue'
 
 const reportStore = useReportStore()
 
 const dialogVisible = ref(false)
 const editingReport = ref(null)
 const formRef = ref(null)
+const sqlEditorRef = ref(null)
+const submitting = ref(false)
+const sqlValid = ref(true)
 
 const form = ref({
   name: '',
@@ -248,7 +253,40 @@ const form = ref({
 const rules = {
   name: [{ required: true, message: '请输入报表名称', trigger: 'blur' }],
   type: [{ required: true, message: '请输入报表类型', trigger: 'blur' }],
-  sql_text: [{ required: true, message: '请输入查询SQL', trigger: 'blur' }]
+  sql_text: [
+    { required: true, message: '请输入查询SQL', trigger: 'blur' },
+    { validator: validateSQL, trigger: 'blur' }
+  ]
+}
+
+// SQL校验规则
+function validateSQL(rule, value, callback) {
+  if (!value) {
+    callback(new Error('请输入查询SQL'))
+    return
+  }
+  
+  // 必须以SELECT开头
+  if (!/^SELECT\b/i.test(value.trim())) {
+    callback(new Error('SQL语句必须以SELECT开头'))
+    return
+  }
+  
+  // 如果SQL编辑器校验失败，则阻止提交
+  if (!sqlValid.value) {
+    callback(new Error('SQL校验失败，请检查SQL语句'))
+    return
+  }
+  
+  callback()
+}
+
+// 处理SQL校验结果
+const handleSQLValidation = (result) => {
+  sqlValid.value = result.valid
+  if (!result.valid) {
+    console.log('SQL校验失败:', result.error)
+  }
 }
 
 // 格式化日期
@@ -303,6 +341,7 @@ const handleCreate = () => {
     enable: true,
     fields: []
   }
+  sqlValid.value = true
   dialogVisible.value = true
 }
 
@@ -320,6 +359,7 @@ const handleEdit = async (report) => {
       enable: reportDetail.enable,
       fields: reportDetail.fields ? [...reportDetail.fields] : []
     }
+    sqlValid.value = true
     dialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取报表详情失败: ' + (error.message || '未知错误'))
@@ -352,9 +392,15 @@ const handleDelete = (report) => {
 const handleSubmit = async () => {
   if (!formRef.value) return
   
+  // 先校验SQL
+  if (sqlEditorRef.value) {
+    await sqlEditorRef.value.validateSQL()
+  }
+  
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     
+    submitting.value = true
     try {
       if (editingReport.value) {
         // 更新报表
@@ -368,6 +414,8 @@ const handleSubmit = async () => {
       dialogVisible.value = false
     } catch (error) {
       ElMessage.error('操作失败: ' + (error.message || '未知错误'))
+    } finally {
+      submitting.value = false
     }
   })
 }
@@ -415,12 +463,15 @@ onMounted(() => {
 <style scoped>
 .report-config {
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .config-card {
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   border: none;
+  background-color: var(--card-background);
 }
 
 .card-header {
@@ -429,6 +480,7 @@ onMounted(() => {
   align-items: center;
   font-size: 18px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .dialog-footer {
@@ -441,22 +493,64 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.sql-input :deep(.el-textarea__inner) {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 .report-name {
   font-weight: 500;
-  color: #409eff;
+  color: var(--primary-color);
+}
+
+.config-dialog :deep(.el-dialog) {
+  background-color: var(--card-background);
 }
 
 .config-dialog :deep(.el-dialog__body) {
   padding: 20px;
 }
 
+.config-dialog :deep(.el-dialog__header) {
+  padding: 15px 20px;
+  background-color: var(--card-background);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
 .config-form {
   padding: 10px 0;
+}
+
+.config-form :deep(.el-form-item__label) {
+  color: var(--text-primary);
+}
+
+.report-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.report-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-input__wrapper) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-input__inner) {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.field-table :deep(.el-select) {
+  background-color: var(--card-background);
+}
+
+.field-table :deep(.el-select__wrapper) {
+  background-color: var(--card-background);
 }
 </style>

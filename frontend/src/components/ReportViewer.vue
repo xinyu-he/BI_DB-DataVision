@@ -112,12 +112,22 @@
       </el-form>
     </el-card>
     
+    <!-- 图表可视化 -->
+    <ChartViewer 
+      v-if="showChart && reportData.data.length > 0" 
+      :report-data="reportData.data" 
+      :fields="displayFields" 
+    />
+    
     <!-- 报表数据表格 -->
     <el-card class="data-card">
       <template #header>
         <div class="card-header">
           <span>报表数据</span>
           <div class="data-actions">
+            <el-button @click="toggleChart" :type="showChart ? 'primary' : 'default'">
+              <el-icon><Histogram /></el-icon>{{ showChart ? '隐藏图表' : '显示图表' }}
+            </el-button>
             <el-button @click="handleExport" :loading="exportLoading" type="success">
               <el-icon><Download /></el-icon>{{ exportLoading ? '导出中...' : '导出Excel' }}
             </el-button>
@@ -135,6 +145,7 @@
         v-loading="loading"
         highlight-current-row
         height="400"
+        class="data-table"
       >
         <el-table-column 
           v-for="field in displayFields" 
@@ -181,8 +192,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Search, Refresh, Download } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, Histogram } from '@element-plus/icons-vue'
 import { useReportStore } from '../stores/report'
+import ChartViewer from './ChartViewer.vue'
 
 const props = defineProps({
   report: {
@@ -204,6 +216,7 @@ const reportData = ref({
 })
 const loading = ref(false)
 const exportLoading = ref(false)
+const showChart = ref(false)
 
 // 可筛选字段
 const filterableFields = computed(() => {
@@ -241,6 +254,11 @@ const formatBoolean = (value) => {
   if (value === true || value === 'true') return '是'
   if (value === false || value === 'false') return '否'
   return value
+}
+
+// 切换图表显示
+const toggleChart = () => {
+  showChart.value = !showChart.value
 }
 
 // 初始化筛选表单
@@ -411,12 +429,14 @@ onMounted(() => {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: none;
+  background-color: var(--card-background);
 }
 
 .data-card {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: none;
+  background-color: var(--card-background);
 }
 
 .card-header {
@@ -425,11 +445,16 @@ onMounted(() => {
   align-items: center;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .filter-form {
   margin-bottom: 10px;
   padding: 15px 0;
+}
+
+.filter-form :deep(.el-form-item__label) {
+  color: var(--text-primary);
 }
 
 .filter-actions, .data-actions {
@@ -446,5 +471,38 @@ onMounted(() => {
 
 .pagination :deep(.el-pagination__ jumper) {
   margin-left: 20px;
+}
+
+.data-table :deep(.el-table__body) {
+  background-color: var(--card-background);
+}
+
+.data-table :deep(.el-table__row) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-input__wrapper) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-input__inner) {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+}
+
+.filter-form :deep(.el-select) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-select__wrapper) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-date-editor) {
+  background-color: var(--card-background);
+}
+
+.filter-form :deep(.el-date-editor .el-input__wrapper) {
+  background-color: var(--card-background);
 }
 </style>
